@@ -99,14 +99,25 @@ func defineHandler(w http.ResponseWriter, r *http.Request) {
 			PartOfSpeech: meaning.PartOfSpeech,
 		}
 
+		seen := make(map[string]bool)
+		synCount := 0
+		maxSyns := 6
+
 		for _, def := range meaning.Definitions {
 			m.Definitions = append(m.Definitions, def.Definition)
 
-			if len(m.Synonyms) > 0 {
-				m.Synonyms = append(m.Synonyms, def.Synonyms...)
+			for _, syn := range def.Synonyms {
+				if synCount >= maxSyns {
+					break
+				}
+
+				if !seen[syn] {
+					m.Synonyms = append(m.Synonyms, syn)
+					seen[syn] = true
+					synCount++
+				}
 			}
 		}
-
 		result.Meanings = append(result.Meanings, m)
 	}
 
