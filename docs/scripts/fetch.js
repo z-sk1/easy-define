@@ -12,7 +12,7 @@ function fetchDef() {
         return;
     }
 
-    fetch(`http://localhost:8081/define?word=${encodeURIComponent(word)}`)
+    fetch(`https://easydefine-service.onrender.com/define?word=${encodeURIComponent(word)}`)
         .then(response => {
             if (!response.ok) {
                 return response.text().then(errTxt => {
