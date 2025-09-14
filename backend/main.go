@@ -12,7 +12,7 @@ import (
 
 func main() {
 	http.HandleFunc("/define", defineHandler)
-	fmt.Println("Time server running on :8081")
+	fmt.Println("Define server running on :8081")
 	fmt.Println("Press CTRL+C to exit")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }

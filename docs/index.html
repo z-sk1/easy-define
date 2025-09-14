@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+ <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>easy define</title>
+        <link rel = "stylesheet" href = "style/styles.css">
+    </head>
+
+        <body>
+            <header>
+                <h1 class = "typing colored">easy define</h1>
+                <div class = "dropdown">
+                    <button class = "dropbtn">
+                        Websites <span class = "arrow">▼</span>
+                    </button>
+                    <div class = "dropdown-content">
+                        <a href = "https://z-sk1.github.io" target = "_blank">Personal Page</a>
+                        <a href = "https://z-sk1.github.io/shrtnd" target = "_blank">shrtnd</a>
+                        <a href = "https://z-sk1.github.io/weathery" target = "_blank">weathery</a>
+                        <a href = "https://z-sk1.github.io/click-clock" target = "_blank">click clock</a>
+                    </div>
+                </div>
+            </header>
+
+            <div class = "input-group">
+                <input type="text" id="wordInput" placeholder="Enter a word...">
+                <button onclick = "fetchDef()">Define</button>
+            </div>
+
+            <div id = "result"></div>
+
+            <script src = "scripts/onClick.js"></script>
+            <script src = "scripts/copy.js"></script>
+            <script src = "scripts/updateDisplay.js"></script>
+            <script src = "scripts/fetch.js"></script>
+            <script src = "scripts/typing.js"></script>
+        </body>
+ </html>
