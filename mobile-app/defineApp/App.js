@@ -1,15 +1,46 @@
 import * as Clipboard from 'expo-clipboard';
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TextInput, Button, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Button, TouchableOpacity, Switch, Alert, ScrollView } from 'react-native';
 
 export default function App() {
   const [txtWordFocused, setTxtWordFocused] = useState(false);
   const [txtWord, setTxtWord] = useState('');
   const [btnFetchPressed, setBtnFetchPressed] = useState(false);
   const [displayData, setDisplayData] = useState(null);
+  const [btnFetchText, setBtnFetchText] = useState("Define");
+  const [btnCopyTxt, setBtnCopyTxt] = useState("Copy");
+  const [btnCopyPressed, setBtnCopyPressed] = useState(false);
+  const [showFade, setShowFade] = useState(true);
 
   function updateDisplay(data) {
+    setDisplayData(data);
+  }
 
+  async function copyData() {
+  if (!txtWord.trim() || !displayData) {
+    Alert.alert("Nothing to copy", "Please define a word first.");
+    return;
+  }
+
+    // Build a string of definitions + synonyms
+    const meaningTxt = displayData.meanings
+      .map(m => {
+        const defs = m.definitions.slice(0, 3).join("\n• ");
+        const syns = m.synonyms?.length ? `\nSynonyms: ${m.synonyms.join(", ")}` : "";
+        return `${m.partOfSpeech}\n• ${defs}${syns}`;
+      })
+      .join("\n\n");
+
+    const textToCopy = `${displayData.word}\n\n${meaningTxt}`;
+
+    try {
+      await Clipboard.setStringAsync(textToCopy);
+      setBtnCopyTxt("Copied!");
+      setTimeout(() => setBtnCopyTxt("Copy"), 1500);
+    } catch (err) {
+      Alert.alert("Copy failed", err.message || "Unknown error");
+    }
   }
 
   async function fetchDef() {
@@ -20,14 +51,22 @@ export default function App() {
         return;
     }
 
+    setBtnFetchText("Defining...")
+
     try {
       const resp = await fetch(`https://easydefine-service.onrender.com/define?word=${encodeURIComponent(word)}`);
 
       if (!resp.ok) {
-
+        throw new Error("Word not found or network error")
       }
+      const data = await resp.json();
+      updateDisplay(data);
     } catch (err) {
-      
+      Alert(err.message);
+      setDisplayData(null);
+    } finally {
+      setBtnFetchText("Defined!")
+      setTimeout(() => setBtnFetchText("Define"), 1500)
     }
 }
 
@@ -51,9 +90,77 @@ export default function App() {
           style = {[styles.button, btnFetchPressed && styles.buttonPressed]}
           onPressIn = {(() => setBtnFetchPressed(true))}
           onPressOut = {(() => setBtnFetchPressed(false))}
-          >
-
+          onPress = {fetchDef}>
+          <Text style = {styles.buttonText}>{btnFetchText}</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.result}>
+      {displayData ? (
+        <View style = {{ position: "relative" }}>
+          <ScrollView
+           style={{ maxHeight: 300 }}
+           onScroll={e => {
+             const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+             const isBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 10; 
+             setShowFade(!isBottom); // hide fade if near bottom
+           }}
+           scrollEventThrottle={16} // smoother updates
+           >
+            <Text style={styles.resultText}>{displayData.word}</Text>
+
+            {displayData.meanings.length === 0 ? (
+              <Text style={styles.resultText}>No definitions found.</Text>
+              ) : (
+                displayData.meanings.map((meaning, i) => (
+                  <View key={i} style={{ marginBottom: 15 }}>
+                    <Text style={[styles.resultText, { fontStyle: 'italic', marginBottom: 5 }]}>
+                      {meaning.partOfSpeech}
+                    </Text>
+                    {meaning.definitions.slice(0, 3).map((def, j) => (
+                      <Text key={j} style={styles.resultText}>
+                        • {def}
+                      </Text>
+                    ))}
+                    {meaning.definitions.length > 3 && (
+                      <Text style={styles.resultText}>…</Text>
+                    )}
+                    {meaning.synonyms?.length > 0 && (
+                      <Text style={[styles.resultText, { marginTop: 5 }]}>
+                        Synonyms: {meaning.synonyms.join(", ")}
+                      </Text>
+                    )}
+                  </View>
+                ))
+              )}
+
+              <TouchableOpacity
+                style = {[styles.copyButton, btnCopyPressed && styles.buttonPressed]}
+                onPressIn = {(() => setBtnCopyPressed(true))}
+                onPressOut = {(() => setBtnCopyPressed(false))}
+                onPress = {copyData}>
+                <Text style = {styles.buttonText}>{btnCopyTxt}</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {showFade && (
+              <LinearGradient
+                colors={["transparent", "rgba(43,62,80,0.9)"]}
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 30,
+                  borderBottomLeftRadius: 12,
+                  borderBottomRightRadius: 12,
+                }}
+              />
+            )}
+          </View>
+        ) : (
+          <Text style={styles.resultText}>Result Here</Text>
+        )}
       </View>
 
     </View>
@@ -123,7 +230,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',  // add vertical centering
     alignSelf: 'center',
-    flexGrow: 1,
+    flexGrow: 0,
 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -135,7 +242,7 @@ const styles = StyleSheet.create({
   copyButton: {
     backgroundColor: '#667eb6ff',
     minWidth: 140,
-    marginTop: 15,
+    marginTop: 5,
     paddingVertical: 15,
     paddingHorizontal: 20, // increase horizontal padding
     borderRadius: 10,
